@@ -64,6 +64,55 @@ def convert_to_jalali(day, month, year):
     
     return jalali_date
 
+def parse_log1(text):
+    #الگو regex برای تجزیه لاگ
+    pattern = re.compile(r"(\d{4}\/\d{2}\/\d{2}) (\d{2}\:\d{2}\:\d{2}) \[(\w+)\] (\d{4})\#(\d{4})\: (\*\d{5}) (\w+\(\)[\w+|\s]+\(\d+\:[\w+|\s]+\)[\s|\w+]+)\, client\:\s?(\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4}),\s+?server\:\s?(\w+\.\w+),\s+?request\:\s?\“([\w|\s]+\/[\w|\s]+\/[\w|\s]+\/[\d|\.]+)\”,\s+?upstream\:\s?\“(\w+\:\/\/\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4}\:\d+\/\w+\/\w+)\”\,\s+?host\:\s?\“(\w+\.\w+)\”\,\s+?referrer\:\s?\“(\w+\:\/\/\w+\.\w+\/)\”")
+    #متن تجزیه شده
+    Parsed_text = re.search(pattern,text)
+
+    date , time , level , proccesID , threadID , unique_identifier , error_message , ip , server , request , upstream , host , referrer = Parsed_text.groups()
+    parsed_log = {
+        "date": date,
+        "time": time,
+        "level": level,
+        "proccedID": proccesID,
+        "threadID" : threadID,
+        "unique_identifier": unique_identifier,
+        "error_message" : error_message,
+        "ip" : ip,
+        "server" : server,
+        "request" : request,
+        "upstream" : upstream,
+        "host" : host,
+        "referrer" : referrer
+    }
+    return parsed_log
+
+def parse_log2(text):
+    #الگو regex برای تجزیه لاگ
+    pattern = re.compile(r"(\d{4}\/\d{2}\/\d{2}) (\d{2}\:\d{2}\:\d{2}) \[(\w+)\] (\d{4})\#(\d{4})\: (\*\d{5}) (.*?)\, client\:\s?(\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4}),\s+?server\:\s?(\w+\.\w+),\s+?request\:\s?\“([\w|\s]+\/[\w|\-|\s|]+\/[\d|\.]+)\”\,\s+?host\:\s?\“(\w+\.\w+)\”\,\s+?referrer\:\s?\“(\w+\:\/\/\w+\.\w+\/)\”")
+    #متن تجزیه شده
+    Parsed_text = re.search(pattern,text)
+
+    date , time , level , proccesID , threadID , unique_identifier , error_message , ip , server , request , host , referrer = Parsed_text.groups()
+
+    parsed_log = {
+        "date": date,
+        "time": time,
+        "level": level,
+        "proccedID": proccesID,
+        "threadID" : threadID,
+        "unique_identifier": unique_identifier,
+        "error_message" : error_message,
+        "ip" : ip,
+        "server" : server,
+        "request" : request,
+        "host" : host,
+        "referrer" : referrer
+    }
+    return parsed_log
+
+
 if __name__ == "__main__":
     #گرفتن ایمیل از کاربر
     email_address = input("Please enter your email address")
@@ -87,3 +136,16 @@ if __name__ == "__main__":
     for day, month, year in dates:
         jalali_date = convert_to_jalali(day, month, year)
         print(f'Miladi: {day}-{month}-{year} => Jalali: {jalali_date}')
+
+    nginx_accesslog = """
+    2024/07/11 15:30:45 [error] 1234#1234: *56789 connect() failed (111: Connection refused) while connecting to upstream, client: 192.168.1.100, server: example.com, request: “GET /api/data HTTP/1.1”, upstream: “http://127.0.0.1:8000/api/data”, host: “example.com”, referrer: “https://example.com/”
+    """  
+    parsed_log_dic1 = parse_log1(nginx_accesslog)
+    print(parsed_log_dic1)
+
+
+    nginx_accesslog2 = """
+    2024/07/11 16:15:20 [error] 1234#1234: *67890 open() “/usr/share/nginx/html/not_found.html” failed (2: No such file or directory), client: 192.168.1.101, server: example.com, request: “GET /nonexistent-page HTTP/1.1”, host: “example.com”, referrer: “https://example.com/”
+    """
+    parsed_log_dic2 = parse_log2(nginx_accesslog2)
+    print(parsed_log_dic2)
